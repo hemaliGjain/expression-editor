@@ -21,10 +21,11 @@ export class Token {
     this.index = index;
 
     // Classify the token.
-    if (/(?:'|").*(?:'|")/.test(text)) {
-      this.kind = "identifier";
-    } else {
+    if (text.includes('AND') || text.includes('OR'))
+    {
       this.kind = "operator";
+    } else {
+      this.kind = "identifier";
     }
   }
 }
@@ -40,7 +41,7 @@ export class Parser {
     const numberRegex = /[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?/;
     const operatorRegex = /AND|OR|and|or|NOT/;
     const variableRegex = /\$'[A-Za-z_][A-Za-z_0-9]+'+((\[([0-9]+)\])*)?/;
-    const identifierRegex = /((?<![\\])['"])((?:.(?!(?<![\\])\1))*.?)\1/;
+    const identifierRegex = /[^\s"']+|"([^"]*)"|'([^']*)'/;
     const otherCharRegex = /\S/g;
 
     const reToken = new RegExp(
@@ -410,8 +411,7 @@ export class Expression_Variable extends Expression {
       lastIndex = textLength;
     }
     const textToBeMatched = this.optoken.text.substring(0, lastIndex);
-    if (
-      /^\$'[A-Za-z_][A-Za-z_0-9]+'+((\[([0-9]+)\])*)?$/.test(
+    if (/[^\s"']+|"([^"]*)"|'([^']*)'/.test(
         this.optoken.text
       ) &&
       isVariablePresent(this.variablesList, textToBeMatched)
@@ -438,7 +438,7 @@ export class Expression_Identifier extends Expression {
 
   PrettyMath() {
     // Any identifier that is a single Latin letter is already valid TeX.
-    if (/(?:'|").*(?:'|")/.test(this.optoken.text))
+    if (/[^\s"']+|"([^"]*)"|'([^']*)'/.test(this.optoken.text))
       return this.optoken.text;
 
     // Multi-character identifiers must be a lowercase Greek
