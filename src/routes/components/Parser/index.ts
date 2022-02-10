@@ -21,11 +21,10 @@ export class Token {
     this.index = index;
 
     // Classify the token.
-    if (text.includes('AND') || text.includes('OR'))
-    {
-      this.kind = "operator";
-    } else {
+    if (/((?<![\\])['"])((?:.(?!(?<![\\])\1))*.?)\1/.test(text)) {
       this.kind = "identifier";
+    } else {
+      this.kind = "operator";
     }
   }
 }
@@ -41,7 +40,7 @@ export class Parser {
     const numberRegex = /[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?/;
     const operatorRegex = /AND|OR|and|or|NOT/;
     const variableRegex = /\$'[A-Za-z_][A-Za-z_0-9]+'+((\[([0-9]+)\])*)?/;
-    const identifierRegex = /[^\s"']+|"([^"]*)"|'([^']*)'/;
+    const identifierRegex = /((?<![\\])['"])((?:.(?!(?<![\\])\1))*.?)\1/;
     const otherCharRegex = /\S/g;
 
     const reToken = new RegExp(
@@ -50,7 +49,7 @@ export class Parser {
         identifierRegex.source +
         "|" +
         otherCharRegex.source,
-      otherCharRegex.flags
+        otherCharRegex.flags
     );
 
     for (;;) {
@@ -180,9 +179,9 @@ export class Parser {
       return this.tokenList[this.nextTokenIndex++];
     }
     const errorMessage =
-      this.tokenList.length !== 0
-        ? "Unexpected end of expression"
-        : "Logic Value cannot be left empty.";
+        this.tokenList.length !== 0
+            ? "Unexpected end of expression"
+            : "Logic Value cannot be left empty.";
     throw {
       name: "SyntaxError",
       message: errorMessage,
@@ -333,11 +332,11 @@ export class Expression_Divide extends Expression {
   PrettyMath() {
     // Use fraction notation. Operator precedence is irrelevant.
     return (
-      "\\frac{" +
-      this.arglist[0].PrettyMath() +
-      "}{" +
-      this.arglist[1].PrettyMath() +
-      "}"
+        "\\frac{" +
+        this.arglist[0].PrettyMath() +
+        "}{" +
+        this.arglist[1].PrettyMath() +
+        "}"
     );
   }
 }
@@ -411,10 +410,11 @@ export class Expression_Variable extends Expression {
       lastIndex = textLength;
     }
     const textToBeMatched = this.optoken.text.substring(0, lastIndex);
-    if (/[^\s"']+|"([^"]*)"|'([^']*)'/.test(
-        this.optoken.text
-      ) &&
-      isVariablePresent(this.variablesList, textToBeMatched)
+    if (
+        /^\$'[A-Za-z_][A-Za-z_0-9]+'+((\[([0-9]+)\])*)?$/.test(
+            this.optoken.text
+        ) &&
+        isVariablePresent(this.variablesList, textToBeMatched)
     )
       return this.optoken.text;
 
@@ -438,7 +438,7 @@ export class Expression_Identifier extends Expression {
 
   PrettyMath() {
     // Any identifier that is a single Latin letter is already valid TeX.
-    if (/[^\s"']+|"([^"]*)"|'([^']*)'/.test(this.optoken.text))
+    if (/((?<![\\])['"])((?:.(?!(?<![\\])\1))*.?)\1/.test(this.optoken.text))
       return this.optoken.text;
 
     // Multi-character identifiers must be a lowercase Greek
@@ -486,11 +486,11 @@ export class Expression_Function extends Expression {
       case "cos":
       case "sin":
         return (
-          "\\" +
-          this.optoken.text +
-          "\\left(" +
-          this.PrettyMath_SingleArg() +
-          "\\right)"
+            "\\" +
+            this.optoken.text +
+            "\\left(" +
+            this.PrettyMath_SingleArg() +
+            "\\right)"
         );
 
       default:
