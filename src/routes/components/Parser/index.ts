@@ -21,7 +21,7 @@ export class Token {
     this.index = index;
 
     // Classify the token.
-    if (/((?<![\\])['"])((?:.(?!(?<![\\])\1))*.?)\1/.test(text)) {
+    if (/[^()\s"']+|"([^"]*)"|'([^']*)'/.test(text)) {
       this.kind = "identifier";
     } else {
       this.kind = "operator";
@@ -38,9 +38,9 @@ export class Parser {
     this.nextTokenIndex = 0;
     this.tokenList = [];
     const numberRegex = /[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?/;
-    const operatorRegex = /AND|OR|and|or|NOT/;
+    const operatorRegex = /AND|OR|and|or/;
     const variableRegex = /\$'[A-Za-z_][A-Za-z_0-9]+'+((\[([0-9]+)\])*)?/;
-    const identifierRegex = /((?<![\\])['"])((?:.(?!(?<![\\])\1))*.?)\1/;
+    const identifierRegex = /[^()\s"']+|"([^"]*)"|'([^']*)'/;
     const otherCharRegex = /\S/g;
 
     const reToken = new RegExp(
@@ -438,7 +438,7 @@ export class Expression_Identifier extends Expression {
 
   PrettyMath() {
     // Any identifier that is a single Latin letter is already valid TeX.
-    if (/((?<![\\])['"])((?:.(?!(?<![\\])\1))*.?)\1/.test(this.optoken.text))
+    if (/[^()\s"']+|"([^"]*)"|'([^']*)'/.test(this.optoken.text))
       return this.optoken.text;
 
     // Multi-character identifiers must be a lowercase Greek
